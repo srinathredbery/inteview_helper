@@ -1,0 +1,36 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('api', {
+    // Media/WebRTC specific methods if needed, but standard navigator works
+    
+    // Config and commands
+    selectContextFiles: () => ipcRenderer.invoke('select-context-files'),
+    getContextFiles: () => ipcRenderer.invoke('get-context-files'),
+    getDesktopSource: () => ipcRenderer.invoke('get-desktop-source'),
+    
+    // MCP Methods
+    addMcpServer: (config) => ipcRenderer.invoke('add-mcp-server', config),
+    getMcpServers: () => ipcRenderer.invoke('get-mcp-servers'),
+    removeMcpServer: (config) => ipcRenderer.invoke('remove-mcp-server', config),
+    
+    // Pass audio to main
+    sendAudioChunk: (data, sampleRate) => ipcRenderer.send('audio-chunk', { ...data, sampleRate }),
+    startCapture: (deviceLabel) => ipcRenderer.send('start-capture', { deviceLabel }),
+    stopCapture: () => ipcRenderer.send('stop-capture'),
+
+    // Listen to results
+    onTranscription: (callback) => ipcRenderer.on('transcription-result', (_event, data) => callback(data)),
+    onLlmResult: (callback) => ipcRenderer.on('llm-result', (_event, data) => callback(data)),
+    
+    // For worker specifically
+    onAudioChunk: (callback) => ipcRenderer.on('audio-chunk-worker', (_event, data) => callback(data)),
+    sendTranscriptionResult: (text, audioId) => ipcRenderer.send('transcription-result', { text, audioId }),
+    
+    // Control and status of the overlay positioning
+    toggleOverlayLock: (locked) => ipcRenderer.send('toggle-overlay-lock', { locked }),
+    onOverlayStatus: (callback) => ipcRenderer.on('overlay-lock-status', (_event, data) => callback(data)),
+    onShowEditMode: (callback) => ipcRenderer.on('show-edit-mode', (_event) => callback()),
+    
+    // Tone settings
+    updateToneSettings: (settings) => ipcRenderer.send('update-tone-settings', settings)
+});

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+</head>
+<body class="overlay-body">
+    <!-- Overlay is invisible by default (transparent background), 
+         we only show panels inside when needed -->
+    <div id="display-panel" class="overlay-panel fade-in" style="display: none; padding: 16px; border-radius: 12px; border: 1px solid var(--glass-border);">
+        <div id="drag-handle" class="drag-handle" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+            DRAG ME
+        </div>
+        <div id="edit-info" style="display: none; font-size: 10px; color: var(--accent); margin-bottom: 8px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">
+            Positioning Mode Active
+        </div>
+        <div id="transcription-box" class="transcription-text">
+            Listening...
+        </div>
+        <div id="llm-box" class="llm-advice">
+            Waiting for complete thought...
+        </div>
+    </div>
+    
+    <script src="overlay.js"></script>
+</body>
+</html>

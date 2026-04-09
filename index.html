@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interview Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+</head>
+<body>
+    <div class="glass-panel control-container">
+        <h1 class="title">Interview Assistant</h1>
+        
+        <div class="form-group">
+            <label>1. Audio Input Source</label>
+            <select id="device-select">
+                <option value="">Loading devices...</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>2. Context Files (RAG)</label>
+            <button id="btn-select-files">Browse Resume / Notes (.txt, .md, .pdf)</button>
+            <ul id="file-list" class="file-list">
+                <li>No files selected. Ollama will only use general knowledge.</li>
+            </ul>
+        </div>
+
+        <div class="form-group">
+            <label>3. MCP Knowledge Servers (React, Angular...)</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="mcp-input" placeholder="npx @modelcontextprotocol/server-..." style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 8px; border-radius: 4px;">
+                <button id="btn-add-mcp" style="padding: 8px 12px;">Add</button>
+            </div>
+            <ul id="mcp-list" class="file-list">
+                <li>No MCP servers connected.</li>
+            </ul>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+            <label>4. Tone Adjustments</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                    <input type="checkbox" id="tone-casual"> 30% More Casual
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                    <input type="checkbox" id="tone-short"> Short (45s)
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                    <input type="checkbox" id="tone-technical"> Deep Technical
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                    <input type="checkbox" id="tone-personality"> Culture/Personality
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+            <label>5. UI Management</label>
+            <button id="btn-reposition-overlay" aria-pressed="false">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+                Unlock & Reposition Overlay
+            </button>
+            <p style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                Tip: Use <b>Alt + Arrow Keys</b> to nudge position while in click-through mode.
+            </p>
+        </div>
+
+        <div class="form-group" style="margin-top: auto">
+            <button id="btn-start" class="primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Start Listening
+            </button>
+            <button id="btn-stop" class="danger" style="display: none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                Stop
+            </button>
+        </div>
+
+        <div id="status-bar" class="status-badge" style="display: none; align-self: flex-start;">
+            <div class="status-dot"></div>
+            Listening and Transcribing...
+        </div>
+    </div>
+    
+    <script src="renderer.js"></script>
+</body>
+</html>
