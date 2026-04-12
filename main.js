@@ -23,6 +23,7 @@ function createWindows() {
         title: "Interview Assistant Control Panel"
     });
     controlWindow.loadFile('index.html');
+    controlWindow.setContentProtection(true);
 
     // 2. Transparent Overlay
     overlayWindow = new BrowserWindow({
@@ -42,6 +43,7 @@ function createWindows() {
     });
     overlayWindow.setIgnoreMouseEvents(true, { forward: true });
     overlayWindow.loadFile('overlay.html');
+    overlayWindow.setContentProtection(true);
     
     overlayWindow.once('ready-to-show', () => {
         overlayWindow.setIgnoreMouseEvents(true, { forward: true });
@@ -80,15 +82,32 @@ function registerShortcuts() {
     globalShortcut.register('Alt+Left',  () => moveOverlay(-nudge, 0));
     globalShortcut.register('Alt+Right', () => moveOverlay(nudge, 0));
 
+    // Global toggle for Control Panel
+    globalShortcut.register('Alt+H', () => {
+        if (controlWindow && !controlWindow.isDestroyed()) {
+            if (controlWindow.isVisible()) {
+                controlWindow.hide();
+            } else {
+                controlWindow.show();
+                controlWindow.restore();
+                controlWindow.focus();
+            }
+        }
+    });
+
     globalShortcut.register('CommandOrControl+Shift+S', async () => {
         console.log("Vision Capture Triggered");
         try {
             if (overlayWindow && !overlayWindow.isDestroyed()) {
                 overlayWindow.webContents.send('llm-result', { text: "🔍 Capturing screen..." });
             }
-            const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1920, height: 1080 } });
-            if (!sources || sources.length === 0) return;
-            const base64Image = sources[0].thumbnail.toPNG().toString('base64');
+            const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1280, height: 720 } });
+            const source = sources[0];
+            if (!source.thumbnail || source.thumbnail.isEmpty()) {
+                console.error("Desktop capture failed: Thumbnail is empty.");
+                return;
+            }
+            const base64Image = source.thumbnail.toJPEG(70).toString('base64');
             
             if (overlayWindow && !overlayWindow.isDestroyed()) {
                 overlayWindow.webContents.send('llm-result', { text: "🧠 Analyzing..." });

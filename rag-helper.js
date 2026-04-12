@@ -5,6 +5,7 @@ const pdfParse = require('pdf-parse');
 // ─── Load secrets from environment variables ─────────────────────────────────
 const OPIK_API_KEY = process.env.OPIK_API_KEY || '';
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || '';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 // ─── Lazy Opik loader ────────────────────────────────────────────────────────
 // opik uses ESM-only deps (ansi-escapes) — dynamic import() is required.
@@ -141,7 +142,14 @@ class RagHelper {
         const opik = await getOpik();
         const trace = opik ? opik.trace({
             name: 'generate_response',
-            input: { rawTranscribedText, correctedText: transcribedText, mcpContext, toneSettings }
+            input: { 
+                rawTranscribedText, 
+                correctedText: transcribedText, 
+                mcpContext, 
+                toneSettings,
+                systemPrompt,
+                perQuestionPrompt 
+            }
         }) : null;
 
         // ── System prompt (who the candidate is) ─────────────────────────────
@@ -255,7 +263,10 @@ ${toneAdjustment ? `--- TONE ADJUSTMENTS ---\n${toneAdjustment}` : ''}
         const mistralSpan = trace ? trace.span({
             name: 'mistral_call',
             type: 'llm',
-            input: { model: 'mistral-small-latest' }
+            input: { 
+                model: 'mistral-small-latest',
+                prompt: perQuestionPrompt
+            }
         }) : null;
         try {
             console.log("Attempting Mistral AI...");
@@ -304,7 +315,10 @@ ${toneAdjustment ? `--- TONE ADJUSTMENTS ---\n${toneAdjustment}` : ''}
         const ollamaSpan = trace ? trace.span({
             name: 'ollama_call',
             type: 'llm',
-            input: { model: 'llama3.2:1b' }
+            input: { 
+                model: 'llama3.2:1b',
+                prompt: perQuestionPrompt
+            }
         }) : null;
         try {
             console.log("Trying Ollama...");
@@ -339,7 +353,10 @@ ${toneAdjustment ? `--- TONE ADJUSTMENTS ---\n${toneAdjustment}` : ''}
             const puterSpan = trace ? trace.span({
                 name: 'puter_ai_call',
                 type: 'llm',
-                input: {}
+                input: {
+                    userPrompt: perQuestionPrompt,
+                    systemPrompt: systemPrompt
+                }
             }) : null;
             try {
                 console.log("Trying Puter AI...");
@@ -374,43 +391,117 @@ ${toneAdjustment ? `--- TONE ADJUSTMENTS ---\n${toneAdjustment}` : ''}
         if (!base64Image) return "";
 
         const opik = await getOpik();
-        const trace = opik ? opik.trace({
-            name: 'vision_request',
-            input: { model: 'llava:7b' }
-        }) : null;
+        const imageSizeKb = Math.round(base64Image.length * 0.75 / 1024);
+        console.log(`[Vision] Image size: ~${imageSizeKb} KB`);
 
         const prompt = "You are a senior software engineer helping a candidate. Analyze the screenshot which contains a coding or technical interview question and provide a short, direct, and correct answer.";
 
-        try {
-            console.log("Attempting Vision LLM (LLaVA)...");
-            const span = trace ? trace.span({
-                name: 'llava_call',
+        const trace = opik ? opik.trace({
+            name: 'vision_request',
+            input: { 
+                model_preference: 'gemini-2.0-flash -> llava:7b',
+                prompt: prompt,
+                image_size_kb: imageSizeKb,
+                image_full: `data:image/jpeg;base64,${base64Image}`
+            }
+        }) : null;
+
+        let finalAnswer = "";
+        let errorDetails = [];
+
+        // ── 1. Gemini 2.0 Flash (Primary) ────────────────────────────────────
+        if (GEMINI_API_KEY) {
+            const geminiSpan = trace ? trace.span({
+                name: 'gemini_vision_call',
                 type: 'llm',
-                input: { model: 'llava:7b' }
+                input: { model: 'gemini-2.0-flash' }
             }) : null;
 
+            try {
+                console.log("Attempting Gemini 2.0 Flash Vision...");
+                const response = await axios.post(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+                    {
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inline_data: {
+                                        mime_type: "image/jpeg",
+                                        data: base64Image
+                                    }
+                                }
+                            ]
+                        }]
+                    },
+                    { timeout: 30000 }
+                );
+
+                const answer = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (answer) {
+                    console.log("Gemini Vision success.");
+                    finalAnswer = answer;
+                    if (geminiSpan) geminiSpan.update({ output: { content: finalAnswer } });
+                }
+            } catch (err) {
+                const errMsg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+                console.warn("Gemini Vision failed:", errMsg);
+                errorDetails.push(`Gemini: ${errMsg}`);
+                if (geminiSpan) geminiSpan.update({ output: { error: errMsg } });
+            } finally {
+                if (geminiSpan) geminiSpan.end();
+            }
+        }
+
+        if (finalAnswer) {
+            if (trace) { trace.update({ output: { content: finalAnswer } }); trace.end(); }
+            if (opik) await opik.flush();
+            return finalAnswer;
+        }
+
+        // ── 2. LLaVA (Local fallback) ────────────────────────────────────────
+        const llavaSpan = trace ? trace.span({
+            name: 'llava_call',
+            type: 'llm',
+            input: { model: 'llava:7b' }
+        }) : null;
+
+        try {
+            console.log("Attempting Fallback Vision LLM (LLaVA)...");
             const response = await axios.post('http://localhost:11434/api/generate', {
                 model: 'llava:7b',
                 prompt,
                 images: [base64Image],
                 stream: false,
                 options: { temperature: 0.2 }
-            }, { timeout: 70000 });
+            }, { timeout: 180000 });
 
             if (response.data && response.data.response) {
                 const answer = response.data.response;
-                if (span) { span.update({ output: { content: answer } }); span.end(); }
-                if (trace) { trace.update({ output: { content: answer } }); trace.end(); }
-                if (opik) await opik.flush();
-                return answer;
+                console.log("LLaVA Vision success.");
+                finalAnswer = answer;
+                if (llavaSpan) llavaSpan.update({ output: { content: finalAnswer } });
             }
         } catch (error) {
-            console.error("Vision LLM failed:", error.message);
-            if (trace) { trace.update({ output: { error: error.message } }); trace.end(); }
-            if (opik) await opik.flush();
+            const errMsg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+            console.error("LLaVA Vision failed:", errMsg);
+            errorDetails.push(`LLaVA: ${errMsg}`);
+            if (llavaSpan) llavaSpan.update({ output: { error: errMsg } });
+        } finally {
+            if (llavaSpan) llavaSpan.end();
         }
 
-        return "Error: Vision LLM (llava:7b) failed to analyze the screenshot.";
+        if (finalAnswer) {
+            if (trace) { trace.update({ output: { content: finalAnswer } }); trace.end(); }
+            if (opik) await opik.flush();
+            return finalAnswer;
+        }
+
+        const errorMsg = `Error: All Vision LLM options failed.\nDetails:\n${errorDetails.join('\n')}`;
+        console.error(errorMsg);
+        if (trace) { trace.update({ output: { error: errorMsg } }); trace.end(); }
+        if (opik) await opik.flush();
+        return errorMsg;
     }
 }
 
