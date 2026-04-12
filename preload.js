@@ -32,5 +32,10 @@ contextBridge.exposeInMainWorld('api', {
     onShowEditMode: (callback) => ipcRenderer.on('show-edit-mode', (_event) => callback()),
     
     // Tone settings
-    updateToneSettings: (settings) => ipcRenderer.send('update-tone-settings', settings)
+    updateToneSettings: (settings) => ipcRenderer.send('update-tone-settings', settings),
+
+    // Content Protection
+    toggleContentProtection: (enabled) => ipcRenderer.send('toggle-content-protection', { enabled }),
+    onContentProtectionStatus: (callback) => ipcRenderer.on('content-protection-status', (_event, data) => callback(data)),
+    getContentProtectionStatus: () => ipcRenderer.invoke('get-content-protection-status')
 });

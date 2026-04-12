@@ -262,3 +262,39 @@ function sendToneUpdate() {
 [toneCasual, toneShort, toneTechnical, tonePersonality].forEach(el => {
     if (el) el.addEventListener('change', sendToneUpdate);
 });
+
+// 5. Content Protection
+const btnToggleProtection = document.getElementById('btn-toggle-protection');
+const protectionStatus = document.getElementById('protection-status');
+let contentProtected = true;
+
+function updateProtectionUI(enabled) {
+    contentProtected = enabled;
+    if (enabled) {
+        btnToggleProtection.textContent = 'Disable Protection';
+        protectionStatus.innerHTML = '<div class="status-dot" style="background: #4ade80;"></div> PROTECTED';
+        protectionStatus.style.background = 'rgba(34, 197, 94, 0.2)';
+        protectionStatus.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+        protectionStatus.style.color = '#4ade80';
+    } else {
+        btnToggleProtection.textContent = 'Enable Protection';
+        protectionStatus.innerHTML = '<div class="status-dot" style="background: #ef4444;"></div> VISIBLE';
+        protectionStatus.style.background = 'rgba(239, 68, 68, 0.2)';
+        protectionStatus.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        protectionStatus.style.color = '#f87171';
+    }
+}
+
+btnToggleProtection.addEventListener('click', () => {
+    window.api.toggleContentProtection(!contentProtected);
+});
+
+window.api.onContentProtectionStatus(({ enabled }) => {
+    updateProtectionUI(enabled);
+});
+
+// Sync initial status
+(async () => {
+    const status = await window.api.getContentProtectionStatus();
+    updateProtectionUI(status);
+})();

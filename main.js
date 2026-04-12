@@ -8,6 +8,8 @@ let controlWindow;
 let overlayWindow;
 let workerWindow;
 let puterAiWindow;
+let isContentProtected = true;
+
 
 function createWindows() {
     // 1. Control Panel
@@ -212,3 +214,16 @@ ipcMain.on('toggle-overlay-lock', (_, { locked }) => {
         if (!locked) overlayWindow.webContents.send('show-edit-mode');
     }
 });
+
+// Content Protection Toggle
+ipcMain.on('toggle-content-protection', (event, { enabled }) => {
+    isContentProtected = enabled;
+    [controlWindow, overlayWindow].forEach(win => {
+        if (win && !win.isDestroyed()) {
+            win.setContentProtection(isContentProtected);
+            win.webContents.send('content-protection-status', { enabled: isContentProtected });
+        }
+    });
+});
+
+ipcMain.handle('get-content-protection-status', () => isContentProtected);
