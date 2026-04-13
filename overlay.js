@@ -1,6 +1,9 @@
 const displayPanel = document.getElementById('display-panel');
 const transcriptionBox = document.getElementById('transcription-box');
 const llmBox = document.getElementById('llm-box');
+const searchBox = document.getElementById('search-box');
+const aiWorkBox = document.getElementById('ai-work-box');
+
 
 let hideTimeout = null;
 
@@ -24,7 +27,10 @@ window.api.onTranscription((data) => {
     // Dim the LLM box while we wait for new answer IF the interviewer is speaking
     if (data.source === 'system') {
         llmBox.style.opacity = '0.5';
+        searchBox.style.display = 'none';
+        aiWorkBox.style.display = 'none';
     }
+
     
     resetHideTimer();
 });
@@ -77,15 +83,56 @@ function animateText(text) {
     }, delay);
 }
 
+window.api.onSearchResult((data) => {
+    console.log('[Overlay] Instant Search Result:', data);
+    displayPanel.style.display = 'block';
+    searchBox.innerHTML = `<strong>INSTANT MATCH:</strong><br>${data.answer}`;
+    searchBox.style.display = 'block';
+    // Match found instantly, but we might still be waiting for AI if showBoth is on
+});
+
 window.api.onLlmResult((data) => {
+    console.log('[Overlay] Received LlmResult:', data);
     displayPanel.style.display = 'block';
     llmBox.style.opacity = '1';
     
-    // Animate the text karaoke style
-    animateText(data.text);
+    // 1. Update/Show Search Match if part of this result
+    if (data.searchMatch) {
+         searchBox.innerHTML = `<strong>INSTANT MATCH:</strong><br>${data.searchAnswer}`;
+         searchBox.style.display = 'block';
+    } else {
+        searchBox.style.display = 'none';
+    }
+
+    // 2. Show AI Response (either replacing generic data.text or specific aiResponse)
+    const aiText = data.aiResponse || data.text;
+    if (aiText && aiText.trim() !== "") {
+         llmBox.style.display = 'block';
+         animateText(aiText);
+    } else {
+        llmBox.style.display = 'none';
+    }
     
+    aiWorkBox.style.display = 'none'; // Hide "Analyzing..." when result arrives
     resetHideTimer();
 });
+
+window.api.onAiActivity((data) => {
+    console.log('[Overlay] AI Activity:', data);
+    displayPanel.style.display = 'block';
+    if (data.status === 'analyzing') {
+        aiWorkBox.innerHTML = `<span class="pulse-tiny"></span> AI Background Task: Analyzing query...`;
+        aiWorkBox.style.display = 'block';
+        
+        // If we don't have a search match showing yet, make LLM box dim
+        if (!data.isMatchVisible) {
+            llmBox.style.opacity = '0.5';
+        }
+    } else {
+        aiWorkBox.style.display = 'none';
+    }
+});
+
 
 // Positioning controls
 const dragHandle = document.getElementById('drag-handle');

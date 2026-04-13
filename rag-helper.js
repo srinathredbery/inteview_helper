@@ -139,19 +139,6 @@ class RagHelper {
             return "Sorry, I did not catch that clearly. Could you please repeat the question?";
         }
 
-        const opik = await getOpik();
-        const trace = opik ? opik.trace({
-            name: 'generate_response',
-            input: { 
-                rawTranscribedText, 
-                correctedText: transcribedText, 
-                mcpContext, 
-                toneSettings,
-                systemPrompt,
-                perQuestionPrompt 
-            }
-        }) : null;
-
         // ── System prompt (who the candidate is) ─────────────────────────────
         const systemPrompt = `
 You are a SENIOR SOFTWARE ENGINEER candidate in a real job interview.
@@ -213,10 +200,6 @@ ${mcpContext}
         if (toneSettings.personality) toneAdjustment += "\nPrioritise personality over achievement. Show who you are.";
 
         // ── Per-question prompt ───────────────────────────────────────────────
-        //
-        // NOTE: We pass the CORRECTED question here.
-        // If STT changed the text, we tell the LLM what it corrected FROM so it
-        // is transparent and does not second-guess itself.
         const correctionNote = wasChanged
             ? `Note: Whisper transcribed "${rawTranscribedText}" — auto-corrected to "${transcribedText}".`
             : '';
@@ -256,6 +239,19 @@ I always try to separate heavy tasks from the main system."
 
 ${toneAdjustment ? `--- TONE ADJUSTMENTS ---\n${toneAdjustment}` : ''}
 `.trim();
+
+        const opik = await getOpik();
+        const trace = opik ? opik.trace({
+            name: 'generate_response',
+            input: { 
+                rawTranscribedText, 
+                correctedText: transcribedText, 
+                mcpContext, 
+                toneSettings,
+                systemPrompt,
+                perQuestionPrompt 
+            }
+        }) : null;
 
         let finalAnswer = "";
 

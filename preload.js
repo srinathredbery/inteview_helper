@@ -37,5 +37,10 @@ contextBridge.exposeInMainWorld('api', {
     // Content Protection
     toggleContentProtection: (enabled) => ipcRenderer.send('toggle-content-protection', { enabled }),
     onContentProtectionStatus: (callback) => ipcRenderer.on('content-protection-status', (_event, data) => callback(data)),
-    getContentProtectionStatus: () => ipcRenderer.invoke('get-content-protection-status')
+    getContentProtectionStatus: () => ipcRenderer.invoke('get-content-protection-status'),
+
+    // Search and AI background work
+    updateSearchSettings: (settings) => ipcRenderer.send('update-search-settings', settings),
+    onAiActivity: (callback) => ipcRenderer.on('ai-activity', (_event, data) => callback(data)),
+    onSearchResult: (callback) => ipcRenderer.on('search-result', (_event, data) => callback(data))
 });

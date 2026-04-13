@@ -1,0 +1,128 @@
+[
+  {
+    "id": 1,
+    "qtype": "hr",
+    "question": "Tell me about yourself.",
+    "answer": "I'm a Full Stack Developer with 13+ years of experience building scalable web applications and AI-powered solutions. My core expertise spans PHP, Laravel, React, Angular on the frontend and backend, along with Python for machine learning and Generative AI projects. Over the years, I've led end-to-end development cycles — from architecture design to deployment — working across startups and enterprise environments. Recently, I've been deeply involved in Gen AI integrations such as LLM-based applications and intelligent automation pipelines.",
+    "keywords": ["13+ years", "full stack", "PHP", "Laravel", "React", "Angular", "Python", "ML", "Gen AI", "end-to-end development"]
+  },
+  {
+    "id": 2,
+    "qtype": "hr",
+    "question": "What are your strengths?",
+    "answer": "My biggest strengths are my versatility and depth across the full stack. I'm equally comfortable designing a Laravel REST API, building a React frontend, and training a machine learning model in Python. I have strong problem-solving skills and a habit of writing clean, maintainable code. I'm also a fast learner — for example, I transitioned into Gen AI and LLM integration relatively recently and already have production-level projects under my belt. Additionally, I'm good at mentoring junior developers and translating technical concepts to non-technical stakeholders.",
+    "keywords": ["versatility", "clean code", "problem-solving", "fast learner", "mentoring", "full stack", "Gen AI", "LLM"]
+  },
+  {
+    "id": 3,
+    "qtype": "hr",
+    "question": "What are your weaknesses?",
+    "answer": "One area I've been actively working on is delegating tasks. As someone who has been hands-on across the entire stack for over a decade, I sometimes tend to take on too much myself rather than trusting junior developers with certain tasks. I've been addressing this by consciously assigning more ownership to team members and focusing on code reviews and mentoring instead of doing everything myself. Another area is that I sometimes over-engineer solutions — I've learned to balance technical perfectionism with delivery timelines.",
+    "keywords": ["delegation", "over-engineering", "self-awareness", "mentoring", "improvement", "balance"]
+  },
+  {
+    "id": 4,
+    "qtype": "hr",
+    "question": "Where do you see yourself in 5 years?",
+    "answer": "In 5 years, I see myself in a senior technical leadership role — either as a Principal Engineer, Technical Architect, or Engineering Manager — where I can drive technology strategy while still staying close to the code. I'm especially excited about the AI space; I want to deepen my expertise in Generative AI and machine learning and lead teams building intelligent, data-driven products. I also want to contribute to open-source and possibly mentor the next generation of full stack developers.",
+    "keywords": ["technical leadership", "Principal Engineer", "Technical Architect", "AI", "Gen AI", "open-source", "mentoring", "growth"]
+  },
+  {
+    "id": 5,
+    "qtype": "hr",
+    "question": "Why are you looking for a new job?",
+    "answer": "After 13+ years of consistent growth, I'm looking for a new challenge that aligns with where technology is heading — particularly in AI and intelligent systems. I want to work in an environment where I can apply my full stack expertise while also pushing boundaries in machine learning and Gen AI. I'm looking for a role where innovation is encouraged and where I can make a meaningful impact at both the engineering and product level.",
+    "keywords": ["new challenge", "AI", "Gen AI", "innovation", "growth", "machine learning", "impact"]
+  },
+  {
+    "id": 6,
+    "qtype": "hr",
+    "question": "Why should we hire you?",
+    "answer": "You should hire me because I bring a rare combination of deep full stack experience — PHP, Laravel, React, Angular — along with modern AI capabilities in Python, machine learning, and Generative AI. With 13+ years of experience, I've shipped production systems at scale, led cross-functional teams, and adapted to rapidly changing technologies. I don't just write code; I think about the business impact, maintainability, and scalability of every solution. I'm someone who can hit the ground running and also grow with the company long-term.",
+    "keywords": ["full stack", "AI", "production systems", "scalability", "business impact", "team leadership", "adaptability"]
+  },
+  {
+    "id": 7,
+    "qtype": "hr",
+    "question": "How do you handle pressure and tight deadlines?",
+    "answer": "With 13+ years of experience, I've learned to thrive under pressure. My approach is to break large tasks into smaller milestones, prioritize ruthlessly, and communicate proactively with stakeholders. I use project management tools and maintain clear documentation so the team stays aligned. I also know when to ask for help or push back on unrealistic timelines with data-backed estimates. I've delivered multiple mission-critical projects under tight deadlines without compromising on quality.",
+    "keywords": ["pressure", "deadlines", "prioritization", "communication", "milestones", "project management", "quality"]
+  },
+  {
+    "id": 8,
+    "qtype": "hr",
+    "question": "Describe a conflict with a colleague and how you resolved it.",
+    "answer": "In one project, I had a disagreement with a backend developer about the API architecture — I preferred a RESTful approach using Laravel while they wanted GraphQL. Instead of pushing my opinion, I proposed we prototype both approaches and evaluate based on our project's specific requirements — performance, team familiarity, and timeline. After the comparison, we collectively decided on REST with some GraphQL elements for specific data-heavy endpoints. The key was keeping the discussion technical and objective, not personal.",
+    "keywords": ["conflict resolution", "collaboration", "API design", "REST", "GraphQL", "objective decision-making", "teamwork"]
+  },
+  {
+    "id": 9,
+    "qtype": "hr",
+    "question": "What is your greatest professional achievement?",
+    "answer": "One of my proudest achievements was architecting and delivering an end-to-end AI-powered SaaS platform using Laravel as the backend, React for the frontend, and Python with machine learning models for intelligent recommendations. The platform scaled to thousands of users and reduced manual processing time by over 60%. I led a team of 6 developers through the entire product lifecycle — from requirement gathering to production deployment. It was a perfect convergence of my full stack and AI skills.",
+    "keywords": ["SaaS", "AI", "Laravel", "React", "Python", "machine learning", "team leadership", "scalability", "achievement"]
+  },
+  {
+    "id": 10,
+    "qtype": "hr",
+    "question": "How do you stay updated with the latest technology trends?",
+    "answer": "I follow a mix of resources — I regularly read documentation and release notes for frameworks like React, Laravel, and Python libraries. I follow AI research through papers on arXiv, Hugging Face blogs, and newsletters like TLDR AI. I also participate in developer communities, contribute to GitHub projects, and experiment with new tools in personal side projects. Recently I've been hands-on with LangChain, OpenAI APIs, and vector databases for Gen AI projects.",
+    "keywords": ["continuous learning", "arXiv", "Hugging Face", "LangChain", "OpenAI", "Gen AI", "GitHub", "community", "upskilling"]
+  },
+  {
+    "id": 11,
+    "qtype": "hr",
+    "question": "Are you a team player or do you prefer working independently?",
+    "answer": "I'm naturally both. I thrive in collaborative environments — I enjoy pair programming, code reviews, and brainstorming architecture with the team. At the same time, I'm very effective working independently, especially on complex problem-solving tasks like debugging a tricky ML pipeline or designing a system architecture. Over 13+ years, I've learned that great software is built by individuals who can focus deeply when needed and collaborate openly when it matters.",
+    "keywords": ["team player", "independent", "collaboration", "code reviews", "pair programming", "architecture", "adaptable"]
+  },
+  {
+    "id": 12,
+    "qtype": "hr",
+    "question": "What is your expected salary?",
+    "answer": "Based on my 13+ years of experience across full stack development and emerging AI technologies, I'm looking for a compensation package that reflects both my technical depth and the value I bring to the team. I'm open to discussing a range that's competitive with the market for senior full stack and AI engineers. I'd also consider the overall package including growth opportunities, remote flexibility, and learning resources.",
+    "keywords": ["salary expectation", "market competitive", "senior engineer", "negotiation", "total compensation", "growth", "flexibility"]
+  },
+  {
+    "id": 13,
+    "qtype": "hr",
+    "question": "How do you prioritize tasks when managing multiple projects?",
+    "answer": "I use a combination of urgency-impact matrices and Agile principles to prioritize. I start each week by reviewing deadlines, dependencies, and business impact. For multiple concurrent projects, I time-box my work and communicate clearly with project managers to set realistic expectations. I also leverage tools like Jira, Trello, or Notion to track progress. With 13+ years of juggling multiple projects, I've developed strong context-switching skills without losing quality.",
+    "keywords": ["prioritization", "Agile", "time management", "Jira", "Trello", "multi-tasking", "context-switching", "project management"]
+  },
+  {
+    "id": 14,
+    "qtype": "hr",
+    "question": "Do you have experience mentoring junior developers?",
+    "answer": "Yes, extensively. Over the past several years, I've mentored 10+ junior and mid-level developers in PHP, Laravel, React, and Python. I conduct regular code reviews with constructive feedback, run internal knowledge-sharing sessions, and pair program on complex features. I believe mentoring is a two-way street — while I teach best practices and architecture thinking, junior developers often bring fresh perspectives and new tools to my attention. It's something I genuinely enjoy.",
+    "keywords": ["mentoring", "code reviews", "knowledge sharing", "pair programming", "junior developers", "leadership", "teaching"]
+  },
+  {
+    "id": 15,
+    "qtype": "hr",
+    "question": "How do you handle receiving critical feedback?",
+    "answer": "I welcome critical feedback as a growth opportunity. Early in my career I may have been defensive, but after 13+ years I've learned that feedback — especially from peers and managers — is invaluable. I listen actively, ask clarifying questions to understand the root concern, and then take actionable steps to improve. I also apply the same standard when giving feedback to others — specific, constructive, and solution-focused.",
+    "keywords": ["feedback", "growth mindset", "active listening", "self-improvement", "constructive", "maturity", "adaptability"]
+  },
+  {
+    "id": 16,
+    "qtype": "hr",
+    "question": "What motivates you at work?",
+    "answer": "I'm driven by solving hard problems and seeing the real-world impact of what I build. There's a unique satisfaction when a machine learning model I trained starts delivering accurate predictions, or when a React application I built improves a user's daily workflow. I'm also motivated by continuous learning — the tech landscape, especially with Gen AI evolving so fast, keeps things exciting. And I find mentoring others deeply fulfilling — helping a junior developer crack a complex problem is genuinely rewarding.",
+    "keywords": ["motivation", "problem-solving", "impact", "ML", "React", "Gen AI", "continuous learning", "mentoring", "passion"]
+  },
+  {
+    "id": 17,
+    "qtype": "hr",
+    "question": "Are you comfortable working in a remote or hybrid environment?",
+    "answer": "Absolutely. I've worked in both remote and hybrid setups and have developed strong async communication habits. I'm proficient with tools like Slack, Notion, Jira, and Zoom. I ensure clear documentation and proactive updates so the team is never blocked on me. Working remotely has also helped me become more disciplined and outcome-focused rather than activity-focused, which I think is the right mindset for modern engineering teams.",
+    "keywords": ["remote work", "hybrid", "async communication", "Slack", "Notion", "documentation", "discipline", "outcome-focused"]
+  },
+  {
+    "id": 18,
+    "qtype": "hr",
+    "question": "How do you approach learning a new technology quickly?",
+    "answer": "My approach is learn-by-doing. I start with the official documentation to understand the fundamentals, then immediately build a small project or proof-of-concept. For example, when I started with Gen AI and LangChain, I built a mini RAG pipeline within the first week to understand the core concepts hands-on. I then go deeper into advanced topics, explore community resources, and apply it to a real project. My broad experience across PHP, Python, React, and Angular means I can pick up patterns quickly.",
+    "keywords": ["fast learning", "documentation", "hands-on", "LangChain", "RAG", "Gen AI", "proof-of-concept", "adaptability"]
+  }
+]

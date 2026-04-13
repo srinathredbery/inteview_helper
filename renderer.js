@@ -263,6 +263,22 @@ function sendToneUpdate() {
     if (el) el.addEventListener('change', sendToneUpdate);
 });
 
+// Search Settings
+const searchPriority = document.getElementById('search-priority');
+const searchShowBoth = document.getElementById('search-show-both');
+
+function sendSearchSettings() {
+    window.api.updateSearchSettings({
+        searchPriority: searchPriority.checked,
+        showBoth: searchShowBoth.checked
+    });
+}
+
+[searchPriority, searchShowBoth].forEach(el => {
+    if (el) el.addEventListener('change', sendSearchSettings);
+});
+sendSearchSettings();
+
 // 5. Content Protection
 const btnToggleProtection = document.getElementById('btn-toggle-protection');
 const protectionStatus = document.getElementById('protection-status');

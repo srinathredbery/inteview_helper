@@ -91,6 +91,21 @@
             </button>
         </div>
 
+        <div class="form-group" style="margin-top: 16px;">
+            <label>7. Search vs AI Logic</label>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
+                    <input type="checkbox" id="search-priority" checked> Use Search Matches First (Fast)
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
+                    <input type="checkbox" id="search-show-both"> Show Both (Search + AI)
+                </label>
+            </div>
+            <p style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 8px;">
+                Matches transcribed audio against specialized interview JSON before calling LLM.
+            </p>
+        </div>
+
         <div id="status-bar" class="status-badge" style="display: none; align-self: flex-start;">
             <div class="status-dot"></div>
             Listening and Transcribing...
