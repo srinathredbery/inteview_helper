@@ -302,5 +302,79 @@ button.danger:hover {
 
 /* Adjustments for expanded overlay */
 .llm-advice {
-    max-height: 400px; /* Increased for expanded window */
+    max-height: 480px; /* Increased for expanded window */
+}
+
+/* SVG Diagram Classes */
+svg {
+    display: block;
+    margin: 10px auto;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+
+.c-purple rect { fill: rgba(168, 85, 247, 0.1); stroke: #a855f7; }
+.c-purple text { fill: #e9d5ff; }
+
+.c-teal rect { fill: rgba(20, 184, 166, 0.1); stroke: #14b8a6; }
+.c-teal text { fill: #ccfbf1; }
+
+.c-coral rect { fill: rgba(244, 114, 114, 0.1); stroke: #f47272; }
+.c-coral text { fill: #fee2e2; }
+
+.c-amber rect { fill: rgba(245, 158, 11, 0.1); stroke: #f59e0b; }
+.c-amber text { fill: #fef3c7; }
+
+.c-blue rect { fill: rgba(59, 130, 246, 0.1); stroke: #3b82f6; }
+.c-blue text { fill: #dbeafe; }
+
+.c-gray rect { fill: rgba(107, 114, 128, 0.1); stroke: #9ca3af; }
+.c-gray text { fill: #f3f4f6; }
+
+.c-green rect { fill: rgba(34, 197, 94, 0.1); stroke: #22c55e; }
+.c-green text { fill: #dcfce7; }
+
+.th { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; }
+.t { font-family: 'Inter', sans-serif; font-size: 14px; }
+.ts { font-family: 'Inter', sans-serif; font-size: 11px; opacity: 0.7; }
+
+.arr { stroke: rgba(148, 163, 184, 0.8); stroke-width: 1.5; fill: none; }
+.leader { stroke: rgba(148, 163, 184, 0.4); stroke-width: 1; stroke-dasharray: 3,3; }
+
+/* Overlay Split Layout */
+.overlay-content-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.text-area {
+    flex: 0 0 560px; /* Keep text area stable */
+    min-width: 0;
+}
+
+.chart-area {
+    flex: 1;
+    display: none;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    padding: 20px;
+    max-height: 580px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chart-area svg {
+    max-width: 100%;
+    height: auto;
+    filter: none; /* remove filter that might clip */
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
 }

@@ -266,18 +266,36 @@ function sendToneUpdate() {
 // Search Settings
 const searchPriority = document.getElementById('search-priority');
 const searchShowBoth = document.getElementById('search-show-both');
+const techCharts = document.getElementById('tech-charts');
 
 function sendSearchSettings() {
     window.api.updateSearchSettings({
         searchPriority: searchPriority.checked,
-        showBoth: searchShowBoth.checked
+        showBoth: searchShowBoth.checked,
+        techCharts: techCharts ? techCharts.checked : false
     });
 }
 
-[searchPriority, searchShowBoth].forEach(el => {
+[searchPriority, searchShowBoth, techCharts].forEach(el => {
     if (el) el.addEventListener('change', sendSearchSettings);
 });
 sendSearchSettings();
+
+// Test Query Functionality
+const testQueryInput = document.getElementById('test-query-input');
+const btnTestQuery = document.getElementById('btn-test-query');
+if (btnTestQuery && testQueryInput) {
+    btnTestQuery.addEventListener('click', () => {
+        const text = testQueryInput.value.trim();
+        if (text) {
+            window.api.sendTranscriptionResult(text, "test-id", "system");
+            testQueryInput.value = "";
+        }
+    });
+    testQueryInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') btnTestQuery.click();
+    });
+}
 
 // 5. Content Protection
 const btnToggleProtection = document.getElementById('btn-toggle-protection');

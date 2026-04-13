@@ -114,7 +114,6 @@ class RagHelper {
                 console.error(`Error reading context file ${filePath}:`, err);
             }
         }
-
         // Truncate cleanly at sentence boundary
         this.contextText = truncateAtSentence(this.contextText, 30000);
     }
@@ -123,8 +122,16 @@ class RagHelper {
         return this.contextFiles;
     }
 
-    async generateResponse(rawTranscribedText, mcpContext = "", toneSettings = {}) {
-        if (!rawTranscribedText || rawTranscribedText.trim() === "") return "";
+    async generateResponse(rawTranscribedText, mcpContext = "", toneSettings = {}, customSystemPrompt = null) {
+        let fullText = "";
+        await this.generateStreamingResponse(rawTranscribedText, (chunk) => {
+            fullText += chunk;
+        }, mcpContext, toneSettings, customSystemPrompt);
+        return fullText;
+    }
+
+    async generateStreamingResponse(rawTranscribedText, onChunk, mcpContext = "", toneSettings = {}, customSystemPrompt = null) {
+        if (!rawTranscribedText || rawTranscribedText.trim() === "") return;
 
         // ── STEP 0: Correct STT errors before anything else ──────────────────
         const { corrected: transcribedText, wasChanged } = correctSTT(rawTranscribedText);
@@ -136,11 +143,38 @@ class RagHelper {
         // ── STEP 1: Validate question — ask to repeat if still garbled ────────
         if (!looksLikeValidQuestion(transcribedText)) {
             console.warn('[STT] Question still unclear after correction, asking to repeat.');
-            return "Sorry, I did not catch that clearly. Could you please repeat the question?";
+            onChunk("Sorry, I did not catch that clearly. Could you please repeat the question?");
+            return;
         }
 
-        // ── System prompt (who the candidate is) ─────────────────────────────
-        const systemPrompt = `
+        const STT_LAYER = `
+=== FIX SPEECH-TO-TEXT ERRORS FIRST ===
+The question below came from voice input transcribed by Whisper.
+Whisper makes mistakes. Common errors:
+- "gentic eye" → "agentic AI"
+- "jentic" → "agentic"
+- "eye" → "AI"
+- "maching" → "machine"
+
+Before answering, silently correct any obvious STT errors.
+If the question still makes no sense after correction, say:
+"Sorry, I didn't catch that clearly. Could you repeat the question?"
+Do NOT answer a garbled question with a made-up answer.
+Do NOT invent fake project examples, numbers, or accuracy stats.
+
+=== CORRECTED QUESTION ===
+${transcribedText}
+`.trim();
+
+        let systemPrompt = "";
+        let perQuestionPrompt = "";
+
+        if (customSystemPrompt) {
+            systemPrompt = STT_LAYER + "\n\n" + customSystemPrompt;
+            perQuestionPrompt = `Please answer using the format specified in your system instructions.`;
+        } else {
+            // ── Default System prompt (who the candidate is) ─────────────────────────────
+            systemPrompt = STT_LAYER + "\n\n" + `
 You are a SENIOR SOFTWARE ENGINEER candidate in a real job interview.
 You have 13+ years of experience as a full-stack developer.
 
@@ -192,19 +226,19 @@ Use technical terms instead of fancy English words.
 ${mcpContext}
 `.trim();
 
-        // ── Dynamic tone adjustments ──────────────────────────────────────────
-        let toneAdjustment = "";
-        if (toneSettings.casual) toneAdjustment += "\nMake it 30% more casual. Real person, real words.";
-        if (toneSettings.short) toneAdjustment += "\nCut to 45 seconds spoken. Keep the story, cut the detail.";
-        if (toneSettings.technical) toneAdjustment += "\nIncrease technical depth. Interviewer is a Staff Engineer or EM.";
-        if (toneSettings.personality) toneAdjustment += "\nPrioritise personality over achievement. Show who you are.";
+            // ── Dynamic tone adjustments ──────────────────────────────────────────
+            let toneAdjustment = "";
+            if (toneSettings.casual) toneAdjustment += "\nMake it 30% more casual. Real person, real words.";
+            if (toneSettings.short) toneAdjustment += "\nCut to 45 seconds spoken. Keep the story, cut the detail.";
+            if (toneSettings.technical) toneAdjustment += "\nIncrease technical depth. Interviewer is a Staff Engineer or EM.";
+            if (toneSettings.personality) toneAdjustment += "\nPrioritise personality over achievement. Show who you are.";
 
-        // ── Per-question prompt ───────────────────────────────────────────────
-        const correctionNote = wasChanged
-            ? `Note: Whisper transcribed "${rawTranscribedText}" — auto-corrected to "${transcribedText}".`
-            : '';
+            // ── Per-question prompt ───────────────────────────────────────────────
+            const correctionNote = wasChanged
+                ? `Note: Whisper transcribed "${rawTranscribedText}" — auto-corrected to "${transcribedText}".`
+                : '';
 
-        const perQuestionPrompt = `
+            perQuestionPrompt = `
 ${correctionNote}
 
 Interview question: "${transcribedText}"
@@ -239,6 +273,7 @@ I always try to separate heavy tasks from the main system."
 
 ${toneAdjustment ? `--- TONE ADJUSTMENTS ---\n${toneAdjustment}` : ''}
 `.trim();
+        }
 
         const opik = await getOpik();
         const trace = opik ? opik.trace({
@@ -253,95 +288,124 @@ ${toneAdjustment ? `--- TONE ADJUSTMENTS ---\n${toneAdjustment}` : ''}
             }
         }) : null;
 
+        let success = false;
         let finalAnswer = "";
 
         // ── 1. Mistral AI (Primary) ───────────────────────────────────────────
-        const mistralSpan = trace ? trace.span({
-            name: 'mistral_call',
-            type: 'llm',
-            input: { 
-                model: 'mistral-small-latest',
-                prompt: perQuestionPrompt
-            }
-        }) : null;
-        try {
-            console.log("Attempting Mistral AI...");
-            const mistralResponse = await axios.post(
-                'https://api.mistral.ai/v1/chat/completions',
-                {
-                    model: 'mistral-small-latest',
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: perQuestionPrompt }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 300
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${MISTRAL_API_KEY}`
+        if (MISTRAL_API_KEY) {
+            const mistralSpan = trace ? trace.span({
+                name: 'mistral_call',
+                type: 'llm',
+                input: { model: 'mistral-small-latest', prompt: perQuestionPrompt }
+            }) : null;
+            try {
+                console.log("Attempting Mistral AI Streaming...");
+                const response = await axios({
+                    method: 'post',
+                    url: 'https://api.mistral.ai/v1/chat/completions',
+                    data: {
+                        model: 'mistral-small-latest',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: perQuestionPrompt }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 400,
+                        stream: true
                     },
+                    headers: {
+                        'Authorization': `Bearer ${MISTRAL_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    responseType: 'stream',
                     timeout: 10000
-                }
-            );
-
-            const content = mistralResponse.data?.choices?.[0]?.message?.content;
-            if (content) {
-                console.log("Mistral AI success.");
-                finalAnswer = content;
-                if (mistralSpan) mistralSpan.update({
-                    output: { content: finalAnswer },
-                    usage: mistralResponse.data.usage
                 });
+
+                await new Promise((resolve, reject) => {
+                    response.data.on('data', chunk => {
+                        const lines = chunk.toString().split('\n').filter(line => line.trim() !== '');
+                        for (const line of lines) {
+                            if (line.includes('[DONE]')) return;
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const json = JSON.parse(line.replace('data: ', ''));
+                                    const content = json.choices[0]?.delta?.content || "";
+                                    if (content) {
+                                        finalAnswer += content;
+                                        onChunk(content);
+                                    }
+                                } catch (e) { /* ignore partial json */ }
+                            }
+                        }
+                    });
+                    response.data.on('end', () => { success = true; resolve(); });
+                    response.data.on('error', err => reject(err));
+                });
+
+                if (mistralSpan) mistralSpan.update({ output: { content: finalAnswer } });
+            } catch (err) {
+                console.warn("Mistral AI streaming failed:", err.message);
+                if (mistralSpan) mistralSpan.update({ output: { error: err.message } });
+            } finally {
+                if (mistralSpan) mistralSpan.end();
+                if (success) {
+                    if (trace) { trace.update({ output: { content: finalAnswer } }); trace.end(); }
+                    if (opik) await opik.flush();
+                    return;
+                }
             }
-        } catch (err) {
-            console.warn("Mistral AI failed:", err.message);
-            if (mistralSpan) mistralSpan.update({ output: { error: err.message } });
-        } finally {
-            if (mistralSpan) mistralSpan.end();
         }
 
-        if (finalAnswer) {
-            if (trace) { trace.update({ output: { content: finalAnswer } }); trace.end(); }
-            if (opik) await opik.flush();
-            return finalAnswer;
-        }
         // ── 2. Ollama (Local fallback) ────────────────────────────────────────
         const ollamaSpan = trace ? trace.span({
             name: 'ollama_call',
             type: 'llm',
-            input: { 
-                model: 'llama3.2:1b',
-                prompt: perQuestionPrompt
-            }
+            input: { model: 'llama3.2:1b', prompt: perQuestionPrompt }
         }) : null;
         try {
-            console.log("Trying Ollama...");
-            const response = await axios.post('http://localhost:11434/api/generate', {
-                model: 'llama3.2:1b',
-                prompt: perQuestionPrompt,
-                system: systemPrompt,
-                stream: false,
-                options: { temperature: 0.7 }
-            }, { timeout: 15000 });
+            console.log("Trying Ollama Streaming...");
+            const response = await axios({
+                method: 'post',
+                url: 'http://localhost:11434/api/generate',
+                data: {
+                    model: 'llama3.2:1b',
+                    prompt: perQuestionPrompt,
+                    system: systemPrompt,
+                    stream: true,
+                    options: { temperature: 0.7 }
+                },
+                responseType: 'stream',
+                timeout: 15000
+            });
 
-            const content = response.data?.response;
-            if (content) {
-                finalAnswer = content;
-                if (ollamaSpan) ollamaSpan.update({ output: { content: finalAnswer } });
-            }
+            await new Promise((resolve, reject) => {
+                response.data.on('data', chunk => {
+                    const lines = chunk.toString().split('\n').filter(l => l.trim());
+                    for (const line of lines) {
+                        try {
+                            const json = JSON.parse(line);
+                            if (json.response) {
+                                finalAnswer += json.response;
+                                onChunk(json.response);
+                            }
+                            if (json.done) resolve();
+                        } catch (e) {}
+                    }
+                });
+                response.data.on('error', err => reject(err));
+            });
+            success = true;
+            if (ollamaSpan) ollamaSpan.update({ output: { content: finalAnswer } });
         } catch (error) {
-            console.warn("Ollama failed:", error.message);
+            console.warn("Ollama streaming failed:", error.message);
             if (ollamaSpan) ollamaSpan.update({ output: { error: error.message } });
         } finally {
             if (ollamaSpan) ollamaSpan.end();
-        }
-
-        if (finalAnswer) {
-            if (trace) { trace.update({ output: { content: finalAnswer } }); trace.end(); }
-            if (opik) await opik.flush();
-            return finalAnswer;
+            if (success) {
+                if (trace) { trace.update({ output: { content: finalAnswer } }); trace.end(); }
+                if (opik) await opik.flush();
+                return;
+            }
         }
 
         // ── 3. Puter AI (Last resort) ─────────────────────────────────────────
@@ -349,17 +413,15 @@ ${toneAdjustment ? `--- TONE ADJUSTMENTS ---\n${toneAdjustment}` : ''}
             const puterSpan = trace ? trace.span({
                 name: 'puter_ai_call',
                 type: 'llm',
-                input: {
-                    userPrompt: perQuestionPrompt,
-                    systemPrompt: systemPrompt
-                }
+                input: { userPrompt: perQuestionPrompt, systemPrompt: systemPrompt }
             }) : null;
             try {
-                console.log("Trying Puter AI...");
+                console.log("Trying Puter AI (No streaming support in invoker yet)...");
                 const puterResponse = await this.puterInvoker(systemPrompt, perQuestionPrompt);
                 if (puterResponse && puterResponse.trim().length > 0) {
-                    console.log("Puter AI success.");
                     finalAnswer = puterResponse;
+                    onChunk(puterResponse);
+                    success = true;
                     if (puterSpan) puterSpan.update({ output: { content: finalAnswer } });
                 }
             } catch (err) {
@@ -370,17 +432,16 @@ ${toneAdjustment ? `--- TONE ADJUSTMENTS ---\n${toneAdjustment}` : ''}
             }
         }
 
-        if (finalAnswer) {
+        if (success) {
             if (trace) { trace.update({ output: { content: finalAnswer } }); trace.end(); }
             if (opik) await opik.flush();
-            return finalAnswer;
+            return;
         }
 
-        // ── All options exhausted ─────────────────────────────────────────────
-        const errorMsg = "Error: All LLM options failed (Mistral, Ollama, Puter). Please check your connection.";
+        const errorMsg = "Error: All LLM options failed (Mistral, Ollama, Puter).";
+        onChunk(errorMsg);
         if (trace) { trace.update({ output: { error: errorMsg } }); trace.end(); }
         if (opik) await opik.flush();
-        return errorMsg;
     }
 
     async generateVisionResponse(base64Image) {

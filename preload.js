@@ -20,16 +20,18 @@ contextBridge.exposeInMainWorld('api', {
 
     // Listen to results
     onTranscription: (callback) => ipcRenderer.on('transcription-result', (_event, data) => callback(data)),
+    onLlmChunk: (callback) => ipcRenderer.on('llm-chunk', (_event, data) => callback(data)),
     onLlmResult: (callback) => ipcRenderer.on('llm-result', (_event, data) => callback(data)),
     
     // For worker specifically
     onAudioChunk: (callback) => ipcRenderer.on('audio-chunk-worker', (_event, data) => callback(data)),
-    sendTranscriptionResult: (text, audioId) => ipcRenderer.send('transcription-result', { text, audioId }),
+    sendTranscriptionResult: (text, audioId, source) => ipcRenderer.send('transcription-result', { text, audioId, source }),
     
     // Control and status of the overlay positioning
     toggleOverlayLock: (locked) => ipcRenderer.send('toggle-overlay-lock', { locked }),
     onOverlayStatus: (callback) => ipcRenderer.on('overlay-lock-status', (_event, data) => callback(data)),
     onShowEditMode: (callback) => ipcRenderer.on('show-edit-mode', (_event) => callback()),
+    resizeOverlay: (width, height) => ipcRenderer.send('resize-overlay', { width, height }),
     
     // Tone settings
     updateToneSettings: (settings) => ipcRenderer.send('update-tone-settings', settings),

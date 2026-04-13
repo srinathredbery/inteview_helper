@@ -174,7 +174,7 @@ try {
     });
 
     let sessionTone = { casual: false, short: false, technical: false, personality: false };
-    let searchSettings = { showBoth: false, searchPriority: true };
+    let searchSettings = { showBoth: false, searchPriority: true, techCharts: false };
 
     ipcMain.on('update-tone-settings', (_, settings) => sessionTone = settings);
     ipcMain.on('update-search-settings', (_, settings) => searchSettings = settings);
@@ -199,19 +199,109 @@ try {
 
             let llmAnswer = "";
             const shouldCallLLM = !searchResult || searchSettings.showBoth || !searchSettings.searchPriority;
-            
-            if (shouldCallLLM) {
+                   if (shouldCallLLM) {
                 // Send "Analyzing..." to background UI
                 [controlWindow, overlayWindow].forEach(win => {
                     if (win && !win.isDestroyed()) win.webContents.send('ai-activity', { 
                         status: 'analyzing', 
                         query: data.text,
-                        isMatchVisible: !!searchResult // Tells UI to show thinking placeholder below match
+                        isMatchVisible: !!searchResult 
                     });
                 });
                 const mcpContext = await mcpManager.getContextFromAll(data.text);
-                llmAnswer = await ragHelper.generateResponse(data.text, mcpContext, sessionTone);
+                
+                let activePrompt = null;
+                if (searchSettings.techCharts) {
+                    activePrompt = `
+You are a real-time interview answer assistant for a senior full stack developer 
+(13+ years, PHP/Laravel/React/Angular/Python/ML/Gen AI).
+
+You receive a question the interviewer just asked and a prepared answer from a knowledge base. 
+Your job is to deliver a polished, confident spoken answer — and when the question is TECHNICAL, 
+you MUST also produce an SVG diagram that visually explains the concept.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESPONSE FORMAT — follow exactly
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For HR / behavioral questions (strengths, weaknesses, salary, motivation):
+→ Output spoken answer only. 3-5 sentences. First person. Confident tone. No SVG needed.
+
+For TECHNICAL questions (code review, architecture, Git, debugging, security, Scrum process, ML, APIs, design patterns):
+→ Output in this exact structure:
+
+SPOKEN:
+[2-4 sentence spoken answer, natural and confident, no jargon overload]
+
+SVG:
+\`\`\`svg
+[your SVG diagram here]
+\`\`\`
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SVG RULES — read carefully, follow exactly
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CANVAS
+• viewBox="0 0 680 H" where H = your content height + 40px buffer
+• width="100%" — never a fixed pixel width
+• Background: transparent — do NOT add a background rect
+• Safe drawing area: x=40 to x=640
+
+ALWAYS include this <defs> block first inside every <svg>:
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5"
+          markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke"
+          stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+TEXT CLASSES (use these exact class names — renderer injects their CSS):
+• class="th"  → 14px bold label (node titles)
+• class="t"   → 14px normal body text
+• class="ts"  → 12px muted secondary text (subtitles, annotations)
+• Always set: text-anchor="middle" dominant-baseline="central"
+• Every <text> MUST have one of these classes — never an unclassed <text>
+
+COLOR CLASSES (apply to <g> wrapping a shape+text):
+• class="c-purple"  → purple nodes (general steps, processes)
+• class="c-teal"    → teal nodes (outputs, results, success states)
+• class="c-coral"   → coral nodes (inputs, triggers, warnings)
+• class="c-amber"   → amber nodes (decisions, conditions)
+• class="c-blue"    → blue nodes (data, storage, services)
+• class="c-gray"    → gray nodes (start/end, neutral, infrastructure)
+• class="c-green"   → green nodes (success, passing states)
+Use 2-3 colors max per diagram. Color encodes meaning, not decoration.
+
+BOX SIZING — compute before placing:
+• Single-line box height: 44px
+• Two-line box height: 56px (title at y+18, subtitle at y+36)
+• Box width = max(title_chars × 8.5, subtitle_chars × 7) + 28px minimum
+• ALWAYS verify: (x + width) ≤ 640 for every box
+• Padding inside box: 14px on each side
+• Gap between adjacent boxes in same row: 20px minimum
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NOW ANSWER THIS QUESTION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Interviewer question: ${data.text}
+Knowledge base answer: ${searchResult ? searchResult.answer : '(No specific match found)'}
+Keywords: ${searchResult && searchResult.keywords ? searchResult.keywords.join(', ') : ''}
+
+Respond now. For technical questions output SPOKEN: then SVG: blocks.
+`.trim();
+                }
+
+                await ragHelper.generateStreamingResponse(data.text, (chunk) => {
+                    llmAnswer += chunk;
+                    [controlWindow, overlayWindow].forEach(win => {
+                        if (win && !win.isDestroyed()) win.webContents.send('llm-chunk', { chunk });
+                    });
+                }, mcpContext, sessionTone, activePrompt);
             }
+
             let finalAnswer = "";
             if (searchSettings.showBoth) {
                 finalAnswer = searchResult ? `**[MATCHED]** ${searchResult.answer}\n\n**[AI]** ${llmAnswer}` : llmAnswer;
@@ -220,6 +310,7 @@ try {
             } else {
                 finalAnswer = llmAnswer;
             }
+
             [controlWindow, overlayWindow].forEach(win => {
                 if (win && !win.isDestroyed()) win.webContents.send('llm-result', { 
                     text: finalAnswer, 
@@ -252,6 +343,12 @@ try {
             clearTimeout(req.timeout);
             puterRequests.delete(id);
             if (success) req.resolve(text); else req.reject(new Error(error));
+        }
+    });
+
+    ipcMain.on('resize-overlay', (_, { width, height }) => {
+        if (overlayWindow && !overlayWindow.isDestroyed()) {
+            overlayWindow.setSize(width, height);
         }
     });
 
