@@ -215,7 +215,7 @@ Always be honest about your skills and experience. AI can help you communicate b
 
 ## 📄 License
 
-MIT © 2024 [Your Name](https://github.com/srinathredbery)
+MIT © 2024 (https://github.com/srinathredbery)
 
 ---
 
