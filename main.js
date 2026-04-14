@@ -167,10 +167,34 @@ try {
     ipcMain.on('start-capture', (_, { deviceLabel }) => console.log("Capture Start:", deviceLabel));
     ipcMain.on('stop-capture',  ()                   => console.log("Capture Stop"));
 
-    ipcMain.on('audio-chunk', (_, data) => {
-        if (workerWindow && !workerWindow.isDestroyed()) {
-            workerWindow.webContents.send('audio-chunk-worker', data);
+    let audioQueue = [];
+    let isWorkerReady = false;
+
+    ipcMain.on('worker-ready', () => {
+        isWorkerReady = true;
+        processAudioQueue();
+    });
+
+    function processAudioQueue() {
+        if (isWorkerReady && audioQueue.length > 0) {
+            const nextChunk = audioQueue.shift();
+            if (workerWindow && !workerWindow.isDestroyed()) {
+                workerWindow.webContents.send('audio-chunk-worker', nextChunk);
+                // After sending, we wait for the worker to receive and signal it's ready for more
+                // OR we can just assume it's ready if we want higher throughput, 
+                // but for TRUE backpressure we wait for an ack if we are hitting bottlenecks.
+                // However, 'send' is async. Let's just do a small throttle or use the worker signal.
+                isWorkerReady = false; 
+            }
         }
+    }
+
+    ipcMain.on('audio-chunk', (_, data) => {
+        audioQueue.push(data);
+        // Limit queue size to prevent memory leaks if worker crashes
+        if (audioQueue.length > 100) audioQueue.shift(); 
+        
+        processAudioQueue();
     });
 
     let sessionTone = { casual: false, short: false, technical: false, personality: false };

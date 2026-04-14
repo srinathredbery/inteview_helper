@@ -28,6 +28,7 @@ async function init() {
         }
     });
     console.log("Whisper Pipeline ready.");
+    ipcRenderer.send('worker-ready');
 }
 
 init();
@@ -57,6 +58,9 @@ ipcRenderer.on('audio-chunk-worker', async (event, data) => {
     }
 
     buffers[source].push(...chunkArray);
+    
+    // Signal main process that we are ready for the next chunk (Backpressure)
+    ipcRenderer.send('worker-ready');
 
     // Process every ~3 seconds (48000 samples)
     if (buffers[source].length >= 48000 && !processing[source]) {

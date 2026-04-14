@@ -145,8 +145,11 @@ button.danger:hover {
 
 .overlay-panel {
     background: rgba(15, 23, 42, 0.85); /* highly transparent but readable */
-    border-color: rgba(56, 189, 248, 0.3);
-    max-height: 100%;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 12px;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     position: relative;
     transition: background 0.3s ease, border-color 0.3s ease;
@@ -209,7 +212,6 @@ button.danger:hover {
     font-weight: 500;
     color: #a78bfa;
     line-height: 1.6;
-    max-height: 280px;
     overflow-y: auto;
     scroll-behavior: smooth;
     padding-right: 10px;
@@ -302,7 +304,7 @@ button.danger:hover {
 
 /* Adjustments for expanded overlay */
 .llm-advice {
-    max-height: 480px; /* Increased for expanded window */
+    /* flex: 1; removed fixed max-height */
 }
 
 /* SVG Diagram Classes */
