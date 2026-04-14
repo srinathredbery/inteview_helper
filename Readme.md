@@ -8,9 +8,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/srinathredbery/inteview_helper/releases)
 [![Made with Electron](https://img.shields.io/badge/Made%20with-Electron-47848F?logo=electron)](https://www.electronjs.org/)
 
-> **"Got 3 offers in 2 weeks. This tool is insane."** — anonymous user on HackerNews 🔥
 
----
 
 ## 🚨 What Is This?
 
@@ -25,21 +23,7 @@ Interview Assistant is a **real-time AI interview co-pilot** that runs invisibly
 > **This is not cheating. This is preparation taken seriously.**
 > Doctors use reference guides. Lawyers use research. You use Interview Assistant.
 
----
 
-## 🏆 Results People Are Getting
-
-> *"I had 6 interviews in a month. Passed all of them. Converted 4 to offers."*
-
-> *"Used this for a FAANG loop. Got through all 5 rounds. The system design answers were 🔥"*
-
-> *"HR ghosted me for months. After I started using this, I had 2 recruiters calling ME in the same week."*
-
-> *"Went from $80k to $160k TC in one job switch. This tool helped me talk confidently about things I barely knew."*
-
-Share your story in [Discussions](https://github.com/srinathredbery/inteview_helper/discussions) and get featured here.
-
----
 
 ## ✨ Features
 
